@@ -143,9 +143,8 @@ def criar_receita_item(
     )
 
     session.add(item)
-    session.commit()
-    session.refresh(item)
-
+    # Sem commit aqui: o chamador (salvar_produto_com_receita) faz o commit
+    # depois de adicionar todos os ingredientes atomicamente.
     return item
 
 
@@ -223,13 +222,13 @@ def remover_receita(session: Session, receita_id: int) -> None:
 
 def remover_receita_item(
     session: Session,
-    ingredient_id: int,
+    item_id: int,
 ) -> None:
 
     item = (
         session.query(RecipeItem)
         .filter(
-            RecipeItem.ingredient_id == ingredient_id
+            RecipeItem.id == item_id
         )
         .first()
     )

@@ -35,10 +35,15 @@ def get_lotes_abertos(
     session: Session,
     product_id: Optional[int] = None,
 ) -> list[StockLot]:
+    hoje = date.today()
     q = (
         session.query(StockLot)
         .filter(StockLot.status == "open")
         .filter(StockLot.quantidade_atual > 1e-9)
+        # Exclui lotes vencidos (validade None = sem vencimento, sempre válido)
+        .filter(
+            (StockLot.validade.is_(None)) | (StockLot.validade >= hoje)
+        )
         .order_by(
             StockLot.validade.asc().nulls_last(),
             StockLot.data_abertura.asc(),

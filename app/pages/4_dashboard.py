@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from app.services.application_service import (
+from app.services import (
     criar_gasto,
     dados_dashboard_financeiro,
     excluir_gasto,
@@ -218,7 +218,7 @@ if expenses:
             st.write(expense["categoria"])
 
         with col3:
-            st.write(f"R$ {expense["valor"]:,.2f}")
+            st.write(f"R$ {expense['valor']:,.2f}")
 
         with col4:
             st.write(expense["data"].strftime("%d/%m/%Y"))
@@ -226,7 +226,7 @@ if expenses:
         with col5:
 
             if st.button(
-                "🗑️", key=f"delete_expense_{expense["id"]}", help="Excluir gasto"
+                "🗑️", key=f"delete_expense_{expense['id']}", help="Excluir gasto"
             ):
                 st.session_state["expense_to_delete"] = expense["id"]
 
@@ -245,7 +245,7 @@ if expenses:
             with st.container(border=True):
 
                 st.warning(
-                    f"Tem certeza que deseja excluir " f"o gasto '{expense["nome"]}'?"
+                    f"Tem certeza que deseja excluir " f"o gasto '{expense['nome']}'?"
                 )
 
                 col1, col2 = st.columns(2)

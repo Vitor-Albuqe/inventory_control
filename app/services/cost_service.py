@@ -12,7 +12,6 @@ from app.models import  StockMovement, Product
 from app.models.enums import ProductType
 
 from app.services.inventory_service import _get_product
-from app.test.test_service_inventory import produto
 from app.utils import _to_float
 
 from app.services import get_estoque_aberto, get_estoque_fechado, get_estoque_total, get_lotes_abertos

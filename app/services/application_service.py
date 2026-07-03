@@ -6,41 +6,37 @@ from typing import Any
 
 from sqlalchemy.exc import IntegrityError
 
-from app.repositories.finance_repository import (
+from app.repositories import (
     create_expense,
+    create_sale,
     get_expense,
+    get_product,
     list_active_expenses,
+    list_active_products,
     list_expenses,
+    list_products_with_recipe_relationships,
+    list_recent_corrections,
     list_sales,
+    list_sales_filtered,
     soft_delete_expense,
 )
-from app.repositories.movement_repository import list_recent_corrections
-from app.repositories.product_repository import (
-    get_product,
-    list_active_products,
-    list_products_with_recipe_relationships,
-)
+
 from app.services.cost_service import calcular_custo_receita, get_custo_unitario_produto
-from app.services.dashboard_service import (
+
+from app.services import (
     get_abertos_proximos_vencimento,
     get_dashboard_estoque,
     get_lotes_abertos_detalhados,
     get_produtos_abaixo_minimo,
-)
-from app.services.movement_services import (
     consumir_lote_completo,
     registrar_abertura,
     registrar_ajuste,
     registrar_consumo,
     registrar_entrada,
     registrar_perda,
-)
-from app.services.product_service import (
     criar_produto,
     delete_product,
     desativar_produto,
-)
-from app.services.recipe_service import (
     adicionar_ingrediente_receita,
     atualizar_quantidade_receita,
     criar_receita_item,
@@ -49,7 +45,10 @@ from app.services.recipe_service import (
     remover_receita,
     remover_receita_item,
 )
+
+
 from app.services.session_scope import session_scope
+
 from app.utils.unit_converter import quantidade_exibicao
 
 
@@ -200,6 +199,9 @@ def salvar_produto_com_receita(**kwargs):
                         ingredient_id=item["ingredient_id"],
                         quantity=item["quantidade_estoque"],
                     )
+                # Todos os ingredientes são commitados juntos: se um falha,
+                # nenhum é persistido (o produto já foi commitado por criar_produto).
+                session.commit()
             nome = produto.nome
             return nome
         except IntegrityError:
@@ -362,3 +364,170 @@ def historico_produto(product_id: int, limit: int = 50):
 
     with session_scope() as session:
         return get_historico_produto(session, product_id, limit=limit)
+
+
+def listar_produtos_vendaveis() -> list[dict[str, Any]]:
+    from app.models import Product
+    from app.models.enums import ProductType
+
+    with session_scope() as session:
+        produtos = (
+            session.query(Product)
+            .filter(
+                Product.ativo.is_(True),
+                Product.tipo_produto.in_([ProductType.PRODUTO_FINAL, ProductType.RECEITA]),
+            )
+            .order_by(Product.nome)
+            .all()
+        )
+        return [
+            {
+                "id": p.id,
+                "nome": p.nome,
+                "preco_venda": float(p.preco_venda) if p.preco_venda is not None else None,
+                "tipo": p.tipo_produto.value,
+            }
+            for p in produtos
+        ]
+
+
+def registrar_venda_ui(
+    product_id: int,
+    quantidade: float,
+    valor_unitario: float,
+    data_venda,
+) -> dict[str, Any]:
+    with session_scope() as session:
+        produto = get_product(session, product_id)
+        if not produto:
+            raise ValueError("Produto não encontrado.")
+        sale = create_sale(
+            session,
+            product_id=product_id,
+            produto_nome=produto.nome,
+            quantidade=quantidade,
+            valor_unitario=valor_unitario,
+            data_venda=data_venda,
+        )
+        session.commit()
+        session.refresh(sale)
+        return {"id": sale.id, "valor_total": float(sale.valor_total)}
+
+
+def listar_vendas_ui(
+    data_inicio=None,
+    data_fim=None,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    with session_scope() as session:
+        sales = list_sales_filtered(session, data_inicio, data_fim, limit=limit)
+        return [
+            {
+                "id": s.id,
+                "data": s.data_venda,
+                "produto_nome": s.produto_nome or (
+                    s.product.nome if s.product else "Produto removido"
+                ),
+                "quantidade": s.quantidade,
+                "valor_unitario": float(s.valor_unitario),
+                "valor_total": float(s.valor_total),
+            }
+            for s in sales
+        ]
+
+
+def resumo_vendas_hoje() -> dict[str, Any]:
+    hoje = date.today()
+    vendas = listar_vendas_ui(data_inicio=hoje, data_fim=hoje)
+    total = sum(v["valor_total"] for v in vendas)
+    count = len(vendas)
+    ticket_medio = total / count if count > 0 else 0.0
+    return {"total": total, "count": count, "ticket_medio": ticket_medio}
+
+
+def registrar_venda_com_consumo_ui(
+    product_id: int,
+    quantidade: float,
+    valor_unitario: float,
+    data_venda,
+) -> dict[str, Any]:
+    """
+    Registra a venda e tenta consumir automaticamente o estoque:
+    - Receitas: desconta cada ingrediente via FEFO em uma única transação.
+    - Produto Final: tenta descontar de lotes abertos se existirem.
+    A venda SEMPRE é registrada. Falhas de estoque viram avisos, não erros fatais.
+    """
+    if quantidade <= 0:
+        raise ValueError("Quantidade deve ser maior que zero.")
+    if valor_unitario < 0:
+        raise ValueError("Valor unitário não pode ser negativo.")
+
+    from app.services import buscar_ingredientes_receita, _consumir_de_lotes, get_lotes_abertos
+
+    avisos: list[str] = []
+
+    with session_scope() as session:
+        produto = get_product(session, product_id)
+        if not produto:
+            raise ValueError("Produto não encontrado.")
+
+        tipo = produto.tipo_produto.value
+
+        if tipo == "receita":
+            itens = buscar_ingredientes_receita(session, product_id)
+            if not itens:
+                avisos.append(
+                    f"Receita '{produto.nome}' sem ingredientes cadastrados — "
+                    "estoque não foi ajustado."
+                )
+            else:
+                for item in itens:
+                    qtd_necessaria = round(item.quantity * quantidade, 6)
+                    try:
+                        _consumir_de_lotes(
+                            session,
+                            item.ingredient_id,
+                            qtd_necessaria,
+                            tipo="consumo",
+                            data_movimento=data_venda,
+                            observacao=f"Venda automática — {produto.nome}",
+                        )
+                    except ValueError as e:
+                        avisos.append(f"⚠️ {item.ingredient.nome}: {e}")
+
+        elif tipo == "produto_final":
+            lotes = get_lotes_abertos(session, product_id)
+            if lotes:
+                try:
+                    _consumir_de_lotes(
+                        session,
+                        product_id,
+                        quantidade,
+                        tipo="consumo",
+                        data_movimento=data_venda,
+                        observacao="Venda",
+                    )
+                except ValueError as e:
+                    avisos.append(f"⚠️ Estoque insuficiente: {e}")
+            else:
+                avisos.append(
+                    f"'{produto.nome}' não possui lotes abertos — "
+                    "ajuste o estoque fechado manualmente na página Estoque."
+                )
+
+        sale = create_sale(
+            session,
+            product_id=product_id,
+            produto_nome=produto.nome,
+            quantidade=quantidade,
+            valor_unitario=valor_unitario,
+            data_venda=data_venda,
+        )
+        session.commit()
+        session.refresh(sale)
+
+        return {
+            "id": sale.id,
+            "valor_total": float(sale.valor_total),
+            "avisos": avisos,
+        }

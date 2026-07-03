@@ -13,22 +13,24 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-from app.services import pode_excluir, pode_excluir_receita
-from app.services.application_service import (
-    adicionar_ingrediente_receita_ui,
-    alternar_produto_ui,
-    alternar_receita_ui,
-    atualizar_quantidade_receita_ui,
-    catalogo_produtos,
-    copiar_ingredientes_receita,
-    custo_receita_ui,
-    custo_unitario_produto_ui,
-    excluir_produto_ui,
-    mudar_preco_receita_ui,
-    remover_receita_item_ui,
-    remover_receita_ui,
-    salvar_produto_com_receita,
+from app.services import (pode_excluir, 
+        pode_excluir_receita,
+        adicionar_ingrediente_receita_ui,
+        alternar_produto_ui,
+        alternar_receita_ui,
+        atualizar_quantidade_receita_ui,
+        catalogo_produtos,
+        copiar_ingredientes_receita,
+        custo_receita_ui,
+        custo_unitario_produto_ui,
+        excluir_produto_ui,
+        mudar_preco_receita_ui,
+        remover_receita_item_ui,
+        remover_receita_ui,
+        salvar_produto_com_receita,
+
 )
+
 
 UNIDADES_MEDIDA = ["g", "kg", "ml", "L", "un"]
 
@@ -247,24 +249,29 @@ if tipo_produto == "receita":
 
             with st.expander("📋 Copiar receita existente"):
 
-                receita_base = st.selectbox(
+                opcoes_receitas = {
+                    r.nome: r.id
+                    for r in receitas_existentes
+                }
+
+                nome_receita = st.selectbox(
                     "Escolha uma receita",
-                    receitas_existentes,
-                    format_func=lambda r: r.nome,
+                    list(opcoes_receitas.keys()),
                     key="copiar_receita",
                 )
+
+                receita_id = opcoes_receitas[nome_receita]
 
                 if st.button(
                     "Copiar ingredientes",
                     key="btn_copiar_receita",
                 ):
 
-                    st.session_state.ingredientes_receita = []
                     st.session_state.ingredientes_receita = copiar_ingredientes_receita(
-                        receita_base.id
+                        receita_id
                     )
 
-                    st.success(f"Receita '{receita_base.nome}' copiada!")
+                    st.success(f"Receita '{nome_receita}' copiada!")
 
                     st.rerun()
 
@@ -284,6 +291,9 @@ if st.button(
 
         st.stop()
 
+    ingredientes = (
+        st.session_state.get("ingredientes_receita", [])
+    )
     if tipo_produto == "receita":
 
         if len(st.session_state.ingredientes_receita) == 0:
@@ -302,7 +312,7 @@ if st.button(
             controla_abertura=controla_abertura,
             preco_venda=preco_venda,
             validade_apos_abertura=validade_apos_abertura,
-            ingredientes=st.session_state.ingredientes_receita,
+            ingredientes=ingredientes,
         )
 
         if tipo_produto == "receita":

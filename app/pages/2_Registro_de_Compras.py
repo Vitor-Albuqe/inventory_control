@@ -11,7 +11,7 @@ from app.utils.ui_formater import (
     format_data_compra_badge,
 )
 from app.utils.data_formater import format_validade
-from app.services.application_service import (
+from app.services import (
     dashboard_estoque,
     historico_produto,
     registrar_ajuste_ui,

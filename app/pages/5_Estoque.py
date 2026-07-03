@@ -4,7 +4,7 @@ from datetime import date
 
 import streamlit as st
 
-from app.services.application_service import (
+from app.services  import (
     abertos_proximos_vencimento,
     abrir_produto,
     dashboard_estoque,
@@ -177,6 +177,8 @@ try:
 
     with tab1:
         nome = st.selectbox("Produto", list(opcoes.keys()), key="consumo_produto")
+        if nome is None:
+            st.stop()
         pid = opcoes[nome]
         lotes_prod = lotes_por_produto.get(pid, [])
         lot_id = None

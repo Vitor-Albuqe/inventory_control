@@ -2,7 +2,7 @@ from datetime import date
 
 import streamlit as st
 
-from app.services.application_service import (
+from app.services import (
     abertos_proximos_vencimento,
     correcoes_recentes,
     produtos_abaixo_minimo,
