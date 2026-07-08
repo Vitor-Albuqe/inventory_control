@@ -3,6 +3,9 @@ venv/
 .env/
 .venv/
 
+# Data files
+*.db
+
 # Python cache
 __pycache__/
 *.pyc
