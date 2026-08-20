@@ -1,12 +1,8 @@
-"""Aplicação Streamlit - MVP de controle de estoque para cafeteria.
+"""Ponto de entrada da aplicação Streamlit.
 
-Arquitetura escolhida (simples e didática):
-- models: define tabelas/classes de domínio.
-- database: conexão e inicialização do banco.
-- services: regras de negócio.
-- pages: interface de cada funcionalidade.
-
-Essa separação facilita manutenção e evolução futura.
+Camadas: pages (UI) → services (regras de negócio) → repositories (acesso a
+dados) → models. A UI nunca consulta o banco diretamente; cada função de
+`application_service` é a fronteira que vira endpoint na migração para API.
 """
 
 import sys
@@ -32,8 +28,8 @@ from app.database.init_db import init_db
 st.set_page_config(page_title="Controle de Estoque - Cafeteria", layout="wide")
 init_db()
 
-st.title("☕ Controle de Estoque - Cafeteria (MVP Fase 1)")
+st.title("☕ Cafezinho — Controle de Estoque")
 st.markdown(
-    "Use o menu lateral para cadastrar produtos, registrar compras "
-    "e acompanhar o dashboard de estoque."
+    "Use o menu lateral para cadastrar produtos, registrar compras e vendas, "
+    "acompanhar alertas de reposição e abrir o dashboard gerencial."
 )

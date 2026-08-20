@@ -8,7 +8,10 @@
 # de uma página (ex.: babel em 6_Vendas.py) precisa ser listado aqui à mão.
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('app', 'app'), ('.streamlit', '.streamlit')]
+# sql/ entra como data porque as queries analíticas são lidas de disco em
+# tempo de execução (app/repositories/analytics_repository.py) — não são
+# strings Python que o PyInstaller empacotaria junto com o código.
+datas = [('app', 'app'), ('.streamlit', '.streamlit'), ('sql', 'sql')]
 binaries = []
 hiddenimports = ['streamlit.web.cli']
 tmp_ret = collect_all('streamlit')

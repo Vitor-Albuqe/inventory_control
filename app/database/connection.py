@@ -1,8 +1,7 @@
-"""Configuração de conexão com o banco de dados SQLite.
+"""Engine, SessionFactory e Base declarativa do SQLAlchemy.
 
-Este módulo concentra tudo que é necessário para o SQLAlchemy
-conversar com o banco. Ao separar esta parte, evitamos repetir
-configuração em vários lugares da aplicação.
+Ponto único de configuração do banco: trocar SQLite por PostgreSQL é trocar
+`DATABASE_URL` aqui, sem tocar em nenhuma outra camada.
 """
 
 import sys
@@ -25,13 +24,11 @@ else:
 
 DATABASE_URL = f"sqlite:///{_DB_DIR / 'cafeteria_estoque.db'}"
 
-# Engine é o objeto que sabe "como" conectar ao banco.
 engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False},  # necessário para Streamlit + SQLite
 )
 
-# SessionLocal cria sessões de banco quando precisamos ler/escrever dados.
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,

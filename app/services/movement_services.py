@@ -30,6 +30,14 @@ def registrar_entrada(
     tempo_entrega: Optional[int] = None,
     observacao: Optional[str] = None,
 ) -> StockMovement:
+    # Validado aqui, não só pelo CHECK do banco: a UI precisa de um
+    # ValueError com mensagem em português, não de um IntegrityError cru
+    # depois que a transação já falhou.
+    if quantidade <= 0:
+        raise ValueError("Quantidade da compra deve ser maior que zero.")
+    if preco_unitario < 0:
+        raise ValueError("Preço unitário não pode ser negativo.")
+
     produto = _get_product(session, product_id)
     pu = Decimal(str(preco_unitario))
     pt = Decimal(str(quantidade)) * pu
