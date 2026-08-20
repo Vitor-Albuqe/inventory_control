@@ -1,0 +1,28 @@
+﻿produto_id,nome,tipo_produto,unidade_medida,estoque_minimo,preco_venda,ativo
+4,Açúcar Refinado,materia_prima,kg,3.0,,True
+18,Bolo de Chocolate (fatia),produto_final,un,8.0,10.0,True
+16,Brownie,produto_final,un,10.0,18.0,True
+24,Café Gelado,receita,un,0.0,11.0,True
+21,Café Passado,receita,un,0.0,8.0,True
+22,Café com Leite,receita,un,0.0,9.0,True
+1,Café em Pó,materia_prima,kg,1.5,,True
+11,Canudo Biodegradável,consumivel,un,200.0,,True
+23,Cappuccino,receita,un,0.0,14.0,True
+5,Chocolate em Pó,materia_prima,kg,1.0,,True
+15,Cookie,produto_final,un,12.0,15.0,True
+8,Copo Descartável 300ml,consumivel,un,150.0,,True
+9,Copo Descartável 500ml,consumivel,un,100.0,,True
+14,Croissant,produto_final,un,10.0,10.0,True
+12,Guardanapo,consumivel,un,300.0,,True
+2,Leite Integral,materia_prima,L,8.0,,True
+3,Leite de Aveia,materia_prima,L,3.0,,True
+27,Matcha Latte,receita,un,0.0,16.0,True
+6,Matcha em Pó,materia_prima,kg,0.3,,True
+25,Mocha,receita,un,0.0,16.0,True
+7,Polpa de Fruta Mista,materia_prima,kg,2.0,,True
+13,Pão de Queijo,produto_final,un,15.0,8.0,True
+20,Refrigerante Lata,produto_final,un,24.0,6.5,True
+26,Suco Natural,receita,un,0.0,8.0,True
+10,Tampa para Copo,consumivel,un,150.0,,True
+17,Torta de Limão (fatia),produto_final,un,8.0,22.5,True
+19,Água Mineral 500ml,produto_final,un,24.0,5.0,True

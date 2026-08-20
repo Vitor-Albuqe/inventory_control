@@ -19,17 +19,34 @@ def list_sales(session: Session, limit: int = 5000) -> list[Sale]:
     )
 
 
-def list_expenses(session: Session) -> list[Expense]:
-    return session.query(Expense).all()
+def list_expenses(
+    session: Session,
+    data_inicio: Optional[date] = None,
+    data_fim: Optional[date] = None,
+) -> list[Expense]:
+    q = session.query(Expense).filter(Expense.is_deleted.is_(False))
+    if data_inicio:
+        q = q.filter(Expense.data >= data_inicio)
+    if data_fim:
+        q = q.filter(Expense.data <= data_fim)
+    return q.all()
 
 
-def list_active_expenses(session: Session) -> list[Expense]:
-    return (
+def list_active_expenses(
+    session: Session,
+    data_inicio: Optional[date] = None,
+    data_fim: Optional[date] = None,
+) -> list[Expense]:
+    q = (
         session.query(Expense)
         .filter(Expense.is_deleted.is_(False))
         .order_by(Expense.data.desc())
-        .all()
     )
+    if data_inicio:
+        q = q.filter(Expense.data >= data_inicio)
+    if data_fim:
+        q = q.filter(Expense.data <= data_fim)
+    return q.all()
 
 
 def get_expense(session: Session, expense_id: int) -> Expense | None:

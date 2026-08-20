@@ -5,9 +5,11 @@ import plotly.express as px
 import streamlit as st
 
 from app.services import (
+    PERIODOS_DASHBOARD,
     criar_gasto,
     dados_dashboard_financeiro,
     excluir_gasto,
+    intervalo_por_periodo,
     obter_gasto,
 )
 
@@ -24,10 +26,34 @@ st.title("☕ Dashboard Financeiro")
 
 
 # =====================================================
+# FILTRO DE PERÍODO
+# =====================================================
+
+col_periodo, col_custom_inicio, col_custom_fim = st.columns([2, 1, 1])
+
+with col_periodo:
+    periodo = st.selectbox(
+        "📅 Período",
+        PERIODOS_DASHBOARD + ["Personalizado"],
+        index=1,
+    )
+
+if periodo == "Personalizado":
+    with col_custom_inicio:
+        data_inicio = st.date_input("De", value=date.today().replace(day=1))
+    with col_custom_fim:
+        data_fim = st.date_input("Até", value=date.today())
+else:
+    data_inicio, data_fim = intervalo_por_periodo(periodo)
+
+st.divider()
+
+
+# =====================================================
 # DADOS DA TELA
 # =====================================================
 
-dashboard_data = dados_dashboard_financeiro()
+dashboard_data = dados_dashboard_financeiro(data_inicio, data_fim)
 
 receita = dashboard_data["receita"]
 investimento = dashboard_data["investimento"]

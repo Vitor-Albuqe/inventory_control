@@ -7,6 +7,7 @@ from app.services import (
     correcoes_recentes,
     produtos_abaixo_minimo,
 )
+from app.utils import formatar_quantidade_estoque
 
 st.set_page_config(
     page_title="Alertas Operacionais",
@@ -32,9 +33,9 @@ if baixo_minimo:
 
         st.error(
             f"{p['nome']} "
-            f"({p['estoque_total']} {p['unidade_medida']}) "
+            f"({formatar_quantidade_estoque(p['estoque_total'], p['unidade_medida'])}) "
             f"abaixo do mínimo "
-            f"({p['estoque_minimo']})"
+            f"({formatar_quantidade_estoque(p['estoque_minimo'], p['unidade_medida'])})"
         )
 
 else:
@@ -55,10 +56,13 @@ if proximos:
 
         dias = item["dias_restantes"]
 
+        quantidade_formatada = formatar_quantidade_estoque(
+            item["quantidade"], item["unidade_medida"]
+        )
         mensagem = (
             f"{item['produto']} "
             f"vence em {dias} dias "
-            f"({item['quantidade']} unidades abertas)"
+            f"({quantidade_formatada} em uso)"
         )
 
         if dias <= 1:
@@ -86,9 +90,10 @@ if ajustes:
     for a in ajustes:
 
         direcao = "➕" if a["direcao"] == "entrada" else "➖"
+        quantidade_formatada = formatar_quantidade_estoque(a["quantidade"], a["unidade_medida"])
 
         st.info(
-            f"{direcao} " f"{a['produto']} | " f"{a['quantidade']} | " f"{a['motivo']}"
+            f"{direcao} " f"{a['produto']} | " f"{quantidade_formatada} | " f"{a['motivo']}"
         )
 
 else:

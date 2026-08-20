@@ -56,11 +56,20 @@ def get_lotes_abertos(
 
 
 def get_estoque_aberto(session: Session, product_id: int) -> float:
-    """Saldo em uso = soma dos lotes abertos."""
+    """Saldo em uso = soma dos lotes abertos e dentro da validade.
+
+    Usa o mesmo critério de get_lotes_abertos (exclui lotes vencidos). Sem
+    isso, um lote que vence antes de ser totalmente consumido some da tela
+    "Lotes em uso" (e do botão Esgotar), mas continuava sendo somado aqui —
+    um saldo "fantasma" que inflava o Em uso/Total para sempre, sem
+    nenhuma forma de zerá-lo pela interface.
+    """
+    hoje = date.today()
     result = (
         session.query(func.coalesce(func.sum(StockLot.quantidade_atual), 0))
         .filter(StockLot.product_id == product_id)
         .filter(StockLot.status == "open")
+        .filter((StockLot.validade.is_(None)) | (StockLot.validade >= hoje))
         .scalar()
     )
     return _to_float(result)
@@ -136,7 +145,12 @@ def _consumir_de_lotes(
         if restante <= 0:
             break
 
-        qtd = min(lot.quantidade_atual, restante)
+        # Arredondado aqui (não só o saldo do lote): quando uma venda
+        # "quebra" entre dois lotes, o restante vem de uma subtração em
+        # ponto flutuante (ex.: 0.24 - 0.17 = 0.06999999999999998 em
+        # float64) que, sem isso, ia parar cru na coluna quantidade do
+        # próximo movimento.
+        qtd = round(min(lot.quantidade_atual, restante), 6)
         lot.quantidade_atual = round(lot.quantidade_atual - qtd, 6)
         if lot.quantidade_atual <= 1e-9:
             lot.quantidade_atual = 0

@@ -1,4 +1,4 @@
-"""Testes do inventory_service."""
+"""Testes do service."""
 
 from datetime import date, timedelta
 
@@ -10,7 +10,7 @@ from app.database.connection import Base
 from app.database.seed import DEFAULT_TENANT_ID, ensure_default_tenant
 import app.models  # noqa: F401
 from app.models.product import Product
-from app.services import inventory_service as svc
+import app.services as svc
 
 
 @pytest.fixture

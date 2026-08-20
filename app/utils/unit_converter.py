@@ -40,6 +40,26 @@ def formatar_receita(
 
     return f"{quantidade:g} {unidade}"
 
+def formatar_quantidade_estoque(
+    quantidade: float,
+    unidade_estoque: str,
+) -> str:
+    """
+    Formata uma quantidade de estoque com a unidade cadastrada do produto
+    (kg/L/un), arredondando no menor incremento real: unidade inteira para
+    "un", grama/ml (3 casas decimais) para "kg"/"L".
+    """
+
+    if unidade_estoque == "un":
+        return f"{round(quantidade):g} un"
+
+    valor = round(quantidade, 3)
+    if valor == 0:
+        valor = 0.0
+    texto = f"{valor:.3f}".rstrip("0").rstrip(".")
+    return f"{texto or '0'} {unidade_estoque}"
+
+
 def _to_float(value) -> float:
     if value is None:
         return 0.0

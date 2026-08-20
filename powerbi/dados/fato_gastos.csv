@@ -1,0 +1,65 @@
+﻿gasto_id,data,nome,categoria,valor
+1,2026-02-03,Marketing e redes sociais,variavel,232.04
+2,2026-02-05,Aluguel do ponto comercial,fixo,2573.94
+3,2026-02-05,Energia elétrica,fixo,498.37
+4,2026-02-05,Água e esgoto,fixo,149.42
+5,2026-02-05,Internet e telefonia,fixo,137.07
+6,2026-02-05,Salários da equipe,fixo,4334.78
+7,2026-02-05,Honorários contábeis,fixo,353.35
+8,2026-02-07,Marketing e redes sociais,variavel,259.52
+9,2026-02-13,Manutenção predial,variavel,511.05
+10,2026-02-14,Manutenção de equipamentos,variavel,144.75
+11,2026-02-16,Material de limpeza,variavel,132.71
+12,2026-02-20,Taxas da maquininha de cartão,variavel,177.26
+13,2026-02-25,Gás de cozinha,variavel,123.74
+14,2026-03-05,Aluguel do ponto comercial,fixo,2512.8
+15,2026-03-05,Energia elétrica,fixo,484.4
+16,2026-03-05,Água e esgoto,fixo,158.3
+17,2026-03-05,Internet e telefonia,fixo,125.48
+18,2026-03-05,Salários da equipe,fixo,4448.65
+19,2026-03-05,Honorários contábeis,fixo,368.84
+20,2026-03-09,Manutenção de equipamentos,variavel,200.92
+21,2026-03-14,Gás de cozinha,variavel,134.26
+22,2026-03-16,Gás de cozinha,variavel,196.55
+23,2026-03-27,Material de limpeza,variavel,134.88
+24,2026-03-31,Manutenção de equipamentos,variavel,210.73
+25,2026-04-04,Marketing e redes sociais,variavel,110.63
+26,2026-04-05,Aluguel do ponto comercial,fixo,2635.77
+27,2026-04-05,Energia elétrica,fixo,473.26
+28,2026-04-05,Água e esgoto,fixo,148.98
+29,2026-04-05,Internet e telefonia,fixo,126.57
+30,2026-04-05,Salários da equipe,fixo,4106.89
+31,2026-04-05,Honorários contábeis,fixo,350.97
+32,2026-04-14,Manutenção predial,variavel,571.51
+33,2026-04-16,Manutenção predial,variavel,449.36
+34,2026-04-21,Marketing e redes sociais,variavel,336.34
+35,2026-04-22,Manutenção predial,variavel,109.95
+36,2026-04-25,Manutenção predial,variavel,264.05
+37,2026-05-05,Aluguel do ponto comercial,fixo,2712.41
+38,2026-05-05,Energia elétrica,fixo,498.65
+39,2026-05-05,Água e esgoto,fixo,158.77
+40,2026-05-05,Internet e telefonia,fixo,127.57
+41,2026-05-05,Salários da equipe,fixo,4096.98
+42,2026-05-05,Honorários contábeis,fixo,363.07
+43,2026-05-05,Reforma - pintura e manutenção do salão,variavel,3500.0
+44,2026-05-14,Gás de cozinha,variavel,143.21
+45,2026-05-30,Material de limpeza,variavel,149.0
+46,2026-06-03,Gás de cozinha,variavel,215.53
+47,2026-06-05,Aluguel do ponto comercial,fixo,2593.62
+48,2026-06-05,Energia elétrica,fixo,488.3
+49,2026-06-05,Água e esgoto,fixo,144.77
+50,2026-06-05,Internet e telefonia,fixo,133.65
+51,2026-06-05,Salários da equipe,fixo,4431.05
+52,2026-06-05,Honorários contábeis,fixo,367.96
+53,2026-06-18,Material de limpeza,variavel,176.61
+54,2026-06-22,Gás de cozinha,variavel,208.27
+55,2026-07-01,Manutenção predial,variavel,231.11
+56,2026-07-05,Aluguel do ponto comercial,fixo,2658.89
+57,2026-07-05,Energia elétrica,fixo,486.99
+58,2026-07-05,Água e esgoto,fixo,148.32
+59,2026-07-05,Internet e telefonia,fixo,137.63
+60,2026-07-05,Salários da equipe,fixo,4398.93
+61,2026-07-05,Honorários contábeis,fixo,343.73
+62,2026-07-05,Material de limpeza,variavel,169.34
+63,2026-07-09,Manutenção de equipamentos,variavel,256.05
+64,2026-07-22,Manutenção predial,variavel,317.28

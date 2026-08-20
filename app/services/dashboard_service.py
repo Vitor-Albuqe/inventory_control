@@ -37,7 +37,14 @@ def get_dashboard_estoque(session: Session) -> list[dict]:
 
     for p in produtos:
         fechado = get_estoque_fechado(session, p.id)
-        aberto = get_estoque_aberto(session, p.id) if p.controla_abertura else 0.0
+        # `controla_abertura` é só um toggle de UI (mostra ou não o formulário
+        # "Abrir qtde" na tela de Estoque) — ele é sempre False para
+        # produto_final (regra de criar_produto), mas a venda de produto_final
+        # consome de lotes abertos igual a uma receita. Zerar o aberto aqui
+        # quando controla_abertura=False escondia estoque real desses
+        # produtos. get_estoque_aberto já retorna 0 quando não há lotes, então
+        # não precisa da condição.
+        aberto = get_estoque_aberto(session, p.id)
         total = fechado + aberto
 
         resultado.append({
@@ -80,6 +87,7 @@ def get_abertos_proximos_vencimento(session: Session, dias: int = 3) -> list[dic
         {
             "lot_id": lot.id,
             "produto": lot.product.nome,
+            "unidade_medida": lot.product.unidade_medida,
             "quantidade": lot.quantidade_atual,
             "validade": lot.validade,
             "dias_restantes": (lot.validade - hoje).days,
@@ -96,6 +104,7 @@ def get_lotes_abertos_detalhados(session: Session) -> list[dict]:
             "lot_id": lot.id,
             "product_id": lot.product_id,
             "produto": lot.product.nome,
+            "unidade_medida": lot.product.unidade_medida,
             "quantidade_atual": lot.quantidade_atual,
             "validade": lot.validade,
             "data_abertura": lot.data_abertura,
@@ -142,6 +151,64 @@ def get_historico_produto(
     ]
 
 
+def get_entradas_recentes(
+    session: Session,
+    product_id: int,
+    limit: Optional[int] = 10,
+    data_inicio: Optional[date] = None,
+    data_fim: Optional[date] = None,
+) -> list[dict]:
+    """Compras (tipo='entrada') de um produto.
+
+    Filtra por tipo ANTES de limitar — diferente de pegar as últimas N
+    movimentações de qualquer tipo e depois filtrar por 'entrada', o que
+    esconde compras antigas em produtos com muito consumo (uma compra de
+    café dura semanas de consumo de poucos gramas por vez; as últimas 10
+    movimentações quase sempre são só consumo, nunca mostrando a compra).
+
+    Com data_inicio/data_fim informados, `limit` é ignorado (mostra todas
+    as compras do período, não só as N mais recentes).
+    """
+    query = (
+        session.query(StockMovement)
+        .filter(StockMovement.product_id == product_id)
+        .filter(StockMovement.tipo == "entrada")
+    )
+    if data_inicio:
+        query = query.filter(StockMovement.data_movimento >= data_inicio)
+    if data_fim:
+        query = query.filter(StockMovement.data_movimento <= data_fim)
+
+    query = query.order_by(StockMovement.data_movimento.desc(), StockMovement.id.desc())
+    if limit and not (data_inicio or data_fim):
+        query = query.limit(limit)
+
+    entradas = query.all()
+    if not entradas:
+        return []
+
+    ids = [e.id for e in entradas]
+    corrigidos = {
+        row[0]
+        for row in session.query(StockMovement.movimento_referencia_id)
+        .filter(StockMovement.movimento_referencia_id.in_(ids))
+        .distinct()
+        .all()
+    }
+
+    return [
+        {
+            "id": e.id,
+            "data": e.data_movimento,
+            "quantidade": e.quantidade,
+            "preco_unitario": _to_float(e.preco_unitario),
+            "fornecedor": e.fornecedor,
+            "corrigido": e.id in corrigidos,
+        }
+        for e in entradas
+    ]
+
+
 def get_custo_medio(session: Session, product_id: int) -> Optional[float]:
     result = (
         session.query(
@@ -178,12 +245,21 @@ def get_valor_estoque_total(session: Session) -> float:
 # ---------------------------------------------------------------------------
 
 
-def get_total_receita(db) -> float:
-    return _to_float(db.query(func.sum(Sale.valor_total)).scalar())
+def get_total_receita(
+    db, data_inicio: Optional[date] = None, data_fim: Optional[date] = None
+) -> float:
+    q = db.query(func.sum(Sale.valor_total))
+    if data_inicio:
+        q = q.filter(Sale.data_venda >= data_inicio)
+    if data_fim:
+        q = q.filter(Sale.data_venda <= data_fim)
+    return _to_float(q.scalar())
 
 
-def get_total_investido(db) -> float:
-    total = db.query(
+def get_total_investido(
+    db, data_inicio: Optional[date] = None, data_fim: Optional[date] = None
+) -> float:
+    q = db.query(
         func.sum(
             case(
                 (
@@ -203,17 +279,41 @@ def get_total_investido(db) -> float:
                 else_=0,
             )
         )
-    ).scalar()
-    return _to_float(total)
+    )
+    if data_inicio:
+        q = q.filter(StockMovement.data_movimento >= data_inicio)
+    if data_fim:
+        q = q.filter(StockMovement.data_movimento <= data_fim)
+    return _to_float(q.scalar())
 
 
-def get_total_gastos(db) -> float:
-    return _to_float(db.query(func.sum(Expense.valor)).scalar())
+def get_total_gastos(
+    db, data_inicio: Optional[date] = None, data_fim: Optional[date] = None
+) -> float:
+    q = db.query(func.sum(Expense.valor)).filter(Expense.is_deleted.is_(False))
+    if data_inicio:
+        q = q.filter(Expense.data >= data_inicio)
+    if data_fim:
+        q = q.filter(Expense.data <= data_fim)
+    return _to_float(q.scalar())
 
 
-def get_total_vendas(db) -> int:
-    return int(db.query(func.count(Sale.id)).scalar() or 0)
+def get_total_vendas(
+    db, data_inicio: Optional[date] = None, data_fim: Optional[date] = None
+) -> int:
+    q = db.query(func.count(Sale.id))
+    if data_inicio:
+        q = q.filter(Sale.data_venda >= data_inicio)
+    if data_fim:
+        q = q.filter(Sale.data_venda <= data_fim)
+    return int(q.scalar() or 0)
 
 
-def get_lucro_estimado(db) -> float:
-    return get_total_receita(db) - get_total_investido(db) - get_total_gastos(db)
+def get_lucro_estimado(
+    db, data_inicio: Optional[date] = None, data_fim: Optional[date] = None
+) -> float:
+    return (
+        get_total_receita(db, data_inicio, data_fim)
+        - get_total_investido(db, data_inicio, data_fim)
+        - get_total_gastos(db, data_inicio, data_fim)
+    )

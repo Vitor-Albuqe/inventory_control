@@ -1,0 +1,13 @@
+[server]
+# Escuta só na máquina local — sem isso, qualquer pessoa na mesma rede
+# Wi-Fi/LAN teria acesso de leitura e escrita ao sistema, já que não há
+# login nem autenticação nas páginas.
+address = "127.0.0.1"
+headless = true
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = false

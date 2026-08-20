@@ -6,6 +6,7 @@ from app.utils.data_formater import (
 from app.utils.unit_converter import (
     _to_float,
     formatar_receita,
+    formatar_quantidade_estoque,
     unidade_exibicao,
     converter_para_estoque,
     )

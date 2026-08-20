@@ -1,3 +1,5 @@
+import html
+
 import streamlit as st
 
 from app.utils.unit_converter import (
@@ -163,7 +165,7 @@ if tipo_produto == "receita":
         quantidade_digitada = float(
             st.number_input(
                 f"Quantidade ({unidade_display})",
-                min_value=0.01,
+                min_value=0.001,
                 step=0.1,
                 format="%.0f",
             )
@@ -209,7 +211,7 @@ if tipo_produto == "receita":
 
                     nova_quantidade = st.number_input(
                         f"Quantidade ({unidade_exibicao(item['unidade'])})",
-                        min_value=0.01,
+                        min_value=0.001,
                         value=float(item["quantidade_exibicao"]),
                         step=0.1,
                         key=f"edit_qty_{idx}",
@@ -420,7 +422,7 @@ with st.expander("Produtos cadastrados"):
                     col1.markdown(
                         f"""
                         <span style="opacity:0.45">
-                            {product.nome}
+                            {html.escape(product.nome)}
                         </span>
                         """,
                         unsafe_allow_html=True,
@@ -531,7 +533,7 @@ for receita in receitas_ativas:
 
             novo_preço = st.number_input(
                 f"Preço de venda: R$ ({receita.preco_venda:.2f})",
-                min_value=0.01,
+                min_value=0.001,
                 step=0.1,
                 format="%.2f",
                 value=float(receita.preco_venda),  # Valor atual como padrão
@@ -568,7 +570,7 @@ for receita in receitas_ativas:
 
                 quantidade = st.number_input(
                     f"Quantidade ({unidade_disp})",
-                    min_value=0.01,
+                    min_value=0.001,
                     step=0.1,
                     key=f"new_qty_{receita.id}",
                 )
@@ -629,7 +631,7 @@ for receita in receitas_ativas:
 
                 nova_quantidade = st.number_input(
                     f"Nova quantidade ({unidade_disp})",
-                    min_value=0.01,
+                    min_value=0.001,
                     step=0.1,
                     format="%.2f",
                     value=float(item.quantity),  # Valor atual como padrão
@@ -699,7 +701,7 @@ if receitas_inativas:
                 st.markdown(
                     f"""
                     <span style="opacity:0.45">
-                        ☕ {receita.nome}
+                        ☕ {html.escape(receita.nome)}
                         ({len(receita.recipe_items)} ingredientes)
                     </span>
                     """,

@@ -70,6 +70,7 @@ from app.services.application_service import(
     salvar_produto_com_receita,
     dashboard_estoque,
     historico_produto,
+    entradas_recentes_ui,
     registrar_ajuste_ui,
     registrar_compra_ui,
     abertos_proximos_vencimento,
@@ -90,4 +91,6 @@ from app.services.application_service import(
     registrar_venda_com_consumo_ui,
     listar_vendas_ui,
     resumo_vendas_hoje,
+    intervalo_por_periodo,
+    PERIODOS_DASHBOARD,
 )

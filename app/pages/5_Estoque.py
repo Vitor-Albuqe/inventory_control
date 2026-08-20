@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 from datetime import date
 
 import streamlit as st
@@ -15,6 +16,7 @@ from app.services  import (
     registrar_consumo_ui,
     registrar_perda_ui,
 )
+from app.utils import formatar_quantidade_estoque
 
 st.set_page_config(
     page_title="Controle de Estoque",
@@ -48,6 +50,7 @@ try:
 
         for item in stock_data:
             produto_id = item["id"]
+            unidade = item["unidade_medida"]
             fechado = item["estoque_fechado"]
             em_uso = item["estoque_aberto"]
             total = item["estoque_total"]
@@ -56,9 +59,9 @@ try:
 
             col[0].markdown(
                 (
-                    f"<span style='font-size:30px'><b>{item['nome']}</b>  \n"
+                    f"<span style='font-size:30px'><b>{html.escape(item['nome'])}</b>  \n"
                     f"<span style='font-size:15px;color:gray'>"
-                    f"{item['unidade_medida']}</span>"
+                    f"{unidade}</span>"
                 ),
                 unsafe_allow_html=True,
             )
@@ -67,19 +70,23 @@ try:
                 unsafe_allow_html=True,
             )
             col[2].markdown(
-                f"<span style='font-size:20px;font-weight:600'>{fechado}</span>",
+                f"<span style='font-size:20px;font-weight:600'>"
+                f"{formatar_quantidade_estoque(fechado, unidade)}</span>",
                 unsafe_allow_html=True,
             )
             col[3].markdown(
-                f"<span style='font-size:20px'>{em_uso}</span>",
+                f"<span style='font-size:20px'>"
+                f"{formatar_quantidade_estoque(em_uso, unidade)}</span>",
                 unsafe_allow_html=True,
             )
             col[4].markdown(
-                f"<span style='font-size:20px'>{total}</span>",
+                f"<span style='font-size:20px'>"
+                f"{formatar_quantidade_estoque(total, unidade)}</span>",
                 unsafe_allow_html=True,
             )
             col[5].markdown(
-                f"<span style='font-size:20px'>{item['estoque_minimo']}</span>",
+                f"<span style='font-size:20px'>"
+                f"{formatar_quantidade_estoque(item['estoque_minimo'], unidade)}</span>",
                 unsafe_allow_html=True,
             )
 
@@ -90,9 +97,9 @@ try:
                     with st.form(key=f"form_abrir_{produto_id}", border=False):
                         qtd = st.number_input(
                             "Qtd",
-                            min_value=1.0,
+                            min_value=min(1.0, float(fechado)),
                             max_value=float(fechado),
-                            value=1.0,
+                            value=min(1.0, float(fechado)),
                             step=1.0,
                             label_visibility="collapsed",
                         )
@@ -138,7 +145,10 @@ try:
                 if urgente:
                     titulo += " ⏳"
                 c1.markdown(titulo)
-                c2.metric("Em uso", lot["quantidade_atual"])
+                c2.metric(
+                    "Em uso",
+                    formatar_quantidade_estoque(lot["quantidade_atual"], lot["unidade_medida"]),
+                )
                 if lot["validade"]:
                     dias = lot["dias_restantes"]
                     if dias is not None and dias <= 0:

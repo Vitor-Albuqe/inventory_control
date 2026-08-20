@@ -16,7 +16,6 @@ from app.repositories import (
     list_expenses,
     list_products_with_recipe_relationships,
     list_recent_corrections,
-    list_sales,
     list_sales_filtered,
     soft_delete_expense,
 )
@@ -44,6 +43,11 @@ from app.services import (
     mudar_preco_receita,
     remover_receita,
     remover_receita_item,
+    get_lucro_estimado,
+    get_total_gastos,
+    get_total_investido,
+    get_total_receita,
+    get_total_vendas,
 )
 
 
@@ -291,6 +295,7 @@ def correcoes_recentes(limit: int = 10) -> list[dict[str, Any]]:
             {
                 "direcao": a.direcao,
                 "produto": a.product.nome,
+                "unidade_medida": a.product.unidade_medida,
                 "quantidade": a.quantidade,
                 "motivo": a.motivo,
             }
@@ -298,21 +303,55 @@ def correcoes_recentes(limit: int = 10) -> list[dict[str, Any]]:
         ]
 
 
-def dados_dashboard_financeiro() -> dict[str, Any]:
-    from app.services.inventory_service import (
-        get_lucro_estimado,
-        get_total_gastos,
-        get_total_investido,
-        get_total_receita,
-        get_total_vendas,
-    )
+PERIODOS_DASHBOARD = [
+    "Tudo",
+    "Este mês",
+    "Mês passado",
+    "Últimos 30 dias",
+    "Últimos 90 dias",
+    "Este ano",
+]
+
+
+def intervalo_por_periodo(opcao: str) -> tuple[date | None, date | None]:
+    """Converte um rótulo amigável ('Este mês', 'Mês passado'...) num
+    intervalo [data_inicio, data_fim]. 'Tudo' devolve (None, None) — sem
+    filtro."""
+    hoje = date.today()
+
+    if opcao == "Este mês":
+        return hoje.replace(day=1), hoje
+
+    if opcao == "Mês passado":
+        primeiro_dia_mes_atual = hoje.replace(day=1)
+        ultimo_dia_mes_passado = primeiro_dia_mes_atual - timedelta(days=1)
+        return ultimo_dia_mes_passado.replace(day=1), ultimo_dia_mes_passado
+
+    if opcao == "Últimos 30 dias":
+        return hoje - timedelta(days=29), hoje
+
+    if opcao == "Últimos 90 dias":
+        return hoje - timedelta(days=89), hoje
+
+    if opcao == "Este ano":
+        return hoje.replace(month=1, day=1), hoje
+
+    return None, None
+
+
+def dados_dashboard_financeiro(
+    data_inicio: date | None = None,
+    data_fim: date | None = None,
+) -> dict[str, Any]:
 
     with session_scope() as session:
         sales = [
-            {"Data": s.data_venda, "Valor": s.valor_total} for s in list_sales(session)
+            {"Data": s.data_venda, "Valor": s.valor_total}
+            for s in list_sales_filtered(session, data_inicio, data_fim, limit=100_000)
         ]
         expenses_chart = [
-            {"Categoria": e.categoria, "Valor": e.valor} for e in list_expenses(session)
+            {"Categoria": e.categoria, "Valor": e.valor}
+            for e in list_expenses(session, data_inicio, data_fim)
         ]
         expenses = [
             {
@@ -322,14 +361,14 @@ def dados_dashboard_financeiro() -> dict[str, Any]:
                 "valor": e.valor,
                 "data": e.data,
             }
-            for e in list_active_expenses(session)
+            for e in list_active_expenses(session, data_inicio, data_fim)
         ]
         return {
-            "receita": get_total_receita(session),
-            "investimento": get_total_investido(session),
-            "gastos": get_total_gastos(session),
-            "lucro": get_lucro_estimado(session),
-            "vendas": get_total_vendas(session),
+            "receita": get_total_receita(session, data_inicio, data_fim),
+            "investimento": get_total_investido(session, data_inicio, data_fim),
+            "gastos": get_total_gastos(session, data_inicio, data_fim),
+            "lucro": get_lucro_estimado(session, data_inicio, data_fim),
+            "vendas": get_total_vendas(session, data_inicio, data_fim),
             "sales": sales,
             "expenses_chart": expenses_chart,
             "expenses": expenses,
@@ -364,6 +403,20 @@ def historico_produto(product_id: int, limit: int = 50):
 
     with session_scope() as session:
         return get_historico_produto(session, product_id, limit=limit)
+
+
+def entradas_recentes_ui(
+    product_id: int,
+    limit: int | None = 10,
+    data_inicio: date | None = None,
+    data_fim: date | None = None,
+) -> list[dict[str, Any]]:
+    from app.services.dashboard_service import get_entradas_recentes
+
+    with session_scope() as session:
+        return get_entradas_recentes(
+            session, product_id, limit=limit, data_inicio=data_inicio, data_fim=data_fim
+        )
 
 
 def listar_produtos_vendaveis() -> list[dict[str, Any]]:
